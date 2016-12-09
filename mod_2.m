@@ -6,5 +6,5 @@ P1=ilogit(beta(3)).*5;
 
 th=2*pi./x;
 D=(1+(hd*th).^2).^-1;
-K= 8*besselj(2,hk*th).*((hk*th).^(-2));%exp(-((hk*th).^2)/2);%(1+(hk*th).^2).^-1;%8*besselj(2,hk*th)*(hk*th)^(-2);
+K= 8*besselj(2,hk*th).*((hk*th).^(-2));
 C1(:,1) = (1-D+P1*K).^-1;

@@ -1,18 +1,14 @@
-function[totmat, b1mat, b2mat, AICmat] = getcatfit(E, dispbin, scale, doplot, Awfit)
+function[totmat, b1mat, b2mat, AICmat] = getcatfit(E, Nsave, dispbin, scale, doplot, Awfit, weighttype, subs2)
+    wts=getweights(weighttype, Nsave);
+
     if(~exist('doplot'))
        doplot=1; 
     end
     
-    if(~exist('doempdist'))
-        doempdist=0;
-    end
-    
     %Fit mean parameters
+    %Fit only first 40 scales
     scalefit=scale(1:40);
-    if(~exist('Awfit'))
-        [~,~,~,Awfit]=spec_analitycal(inline('1+K*0','K','hd'),1000,500,'dx',1,'param',[8 1],...
-            'scale',scalefit);
-    end
+    E=E(1:40,:);
     
     colvar=size(dispbin,2);
     collst=0:(1/colvar):1;
@@ -22,23 +18,33 @@ function[totmat, b1mat, b2mat, AICmat] = getcatfit(E, dispbin, scale, doplot, Aw
     clear b1mat b2mat AIC1mat AIC2mat
     for(ii = 1:size(dispbin,2))
         Ematfit=E(:,logical(dispbin(:,ii)));
-        Ematfit=Ematfit(1:40,~isnan(sum(Ematfit)));
+        Nuse=Nsave(logical(dispbin(:,ii)));
         
-        y=nanmean(Ematfit, 2);
+        sbsii=~isnan(sum(Ematfit));
+        if(exist('subs2'))
+            sbsii=sbsii&subs2(logical(dispbin(:,ii)));
+        end
+        
+        Nuse=Nuse(sbsii);
+        Ematfit=Ematfit(1:40,sbsii);
+        wts_ii=wts(logical(dispbin(:,ii)));
+        wts_ii=wts_ii(sbsii);
+        wts_ii=wts_ii/sum(wts_ii);
+        
+        y=nansum(repmat(wts_ii', [size(Ematfit,1), 1]).*Ematfit,2);
         SIGMA=2*Awfit.*(y*y');
-        %SIGMA_emp=cov(Ematfit');
         beta0=log(4);
         LO=-1;UP=5;
 
-        [b1,~,~,CovB] = gnlinfit(scalefit,y,SIGMA,@mod_1,beta0,LO,UP);
-        b1_sd=sqrt(diag(CovB));
-        p1=mod_1(b1, scalefit);
+        [b1_old,~,~,~] = gnlinfit(scalefit,y,SIGMA,@mod_1,beta0,LO,UP);
         
-        %if(doplot==1)
-        %    loglog(scalefit, p1, 'linestyle', ':', 'color', [collst(ii) 0 revcollst(ii)], 'linewidth', 2);
-        %    hold all
-            %loglog(scalefit, y, 'color', [collst(ii) 0 revcollst(ii)], 'linewidth', 2);
-        %end
+        SIGMA_emp=SIGMA;
+        
+        %REPEAT FITTING
+        [b1,~,~,CovB] = gnlinfit(scalefit,y,SIGMA_emp,@mod_1,b1_old,LO,UP);
+        b1_sd=sqrt(diag(CovB));
+        
+        p1=mod_1(b1, scalefit);
         
         beta0=[b1 -4 -2.3];
 
@@ -46,16 +52,7 @@ function[totmat, b1mat, b2mat, AICmat] = getcatfit(E, dispbin, scale, doplot, Aw
         UP=[5 1.4078 -1.4];
         
         b2=LO;
-        trigger=1;
-        while(trigger==1)
-            [b2,~,~,CovB] = gnlinfit(scalefit,y,SIGMA,@mod_2,beta0,LO,UP);
-            if(~(sum(b2==LO)>0 | sum(b2==UP)>0))
-                trigger=0;
-            end
-            
-            LO(b2==LO)=(LO(b2==LO)-2);
-            UP(b2==UP)=(UP(b2==UP)+2);
-        end
+        [b2,~,~,CovB] = gnlinfit(scalefit,y,SIGMA_emp,@mod_2,beta0,LO,UP);
         b2_sd=sqrt(diag(CovB));
 
         p2=mod_2(b2, scalefit);
@@ -63,7 +60,7 @@ function[totmat, b1mat, b2mat, AICmat] = getcatfit(E, dispbin, scale, doplot, Aw
         if(doplot==1)
             hold all
             loglog(scalefit, p2, 'linestyle', '-', 'color', [collst(ii) 0 revcollst(ii)], 'linewidth', 2);
-        end       
+        end
 
         Lb1=mvnpdf_log(y, p1, SIGMA);
         Lb2=mvnpdf_log(y, p2, SIGMA);

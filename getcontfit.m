@@ -34,11 +34,6 @@ function[totmat, b1mat, b2mat, AICmat] = getcatfit(E, dispbin, scale, doplot, Aw
         b1_sd=sqrt(diag(CovB));
         
         p1=mod_1(b1, scalefit);
-        %if(doplot==1)
-        %    loglog(scalefit, p1, 'linestyle', ':', 'color', [collst(ii) 0 revcollst(ii)], 'linewidth', 2);
-        %    hold all
-            %loglog(scalefit, y, 'color', [collst(ii) 0 revcollst(ii)], 'linewidth', 2);
-        %end
         
         beta0=[b1 0 -2.3];
         

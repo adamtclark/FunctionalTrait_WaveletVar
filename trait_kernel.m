@@ -1,4 +1,4 @@
-function [pd] = trait_kernel(trp0, D, h, a)
+function [pd] = trait_kernel(trp0, D, h, a, wts)
 %Takes arguments for a quadratic kernel and returns
 %probability densities for each species
 %Inputs:
@@ -12,12 +12,6 @@ function [pd] = trait_kernel(trp0, D, h, a)
     pd = (1/G).*(1-((trp0-D)./h).^2).^a;
     pd(trp0==D)=0;
     pd(pd<0) = 0;
-    %hlst = h;
-    %Log weighting
-    %if(nanmax(Navg)>100)
-    %    pd=pd.*log10(Navg);
-    %else
-    %    pd=pd.*log10(Navg.*50e4);
-    %end
-    %pd(Navg==0)=0;
+    
+    pd=pd.*wts;
 end

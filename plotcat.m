@@ -5,7 +5,6 @@ function plotcat(dispbin, meanmat, scale, dispnamesbin)
     revcollst=collst(end:-1:1);
     for(i=1:size(dispbin,2))
         loglog(scale, quantile(meanmat(:,:,i)', [0.159, 0.841])', 'linestyle', '--', 'color', [collst(i) 0 revcollst(i)]); hold on;
-        %loglog(scale, quantile(meanmat(:,:,i)', [0.5])', 'linestyle', '_', 'color', [collst(i) 0 revcollst(i)], 'linewidth', 2)
         loglog(scale, quantile(meanmat(:,:,i)', [0.5])', 'marker', '.', 'linestyle', 'none', 'color', [collst(i) 0 revcollst(i)])
         tmp=meanmat(:,:,i);
         text(max(scale(:)), max(tmp(:)), dispnamesbin(i,:), 'color', [collst(i) 0 revcollst(i)], 'fontsize', 15)
